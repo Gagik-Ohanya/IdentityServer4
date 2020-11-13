@@ -16,7 +16,7 @@ namespace ResourceServer.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            return new JsonResult(User.Claims.Select(c => new { c.Type, c.Value }));
+            return new JsonResult("Hello from API");
         }
     }
 }

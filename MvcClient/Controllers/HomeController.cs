@@ -1,8 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +19,12 @@ namespace MvcClient.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly HttpClient _httpClient;
 
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
+            _httpClient = new HttpClient();
         }
 
         public IActionResult Index()
@@ -26,9 +33,17 @@ namespace MvcClient.Controllers
         }
 
         [Authorize]
-        public IActionResult Secret()
+        public async Task<IActionResult> Secret()
         {
-            return View();
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            var idToken = await HttpContext.GetTokenAsync("id_token");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var response = await _httpClient.GetAsync("https://localhost:44367/identity");
+
+            var result = new SecretViewModel { DataFromResource = await response.Content.ReadAsStringAsync() };
+
+            return View(result);
         }
 
         [Authorize]
